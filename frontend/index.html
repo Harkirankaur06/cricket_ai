@@ -1,16 +1,65 @@
-<html>
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Cricket AI</title>
+  <meta charset="UTF-8">
+  <title>Cricket AI - Predict Runs</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Predict Runs</h1>
-  <input id="batter" placeholder="Batter">
-  <input id="bowler" placeholder="Bowler">
-  <input id="venue" placeholder="Venue">
-  <button onclick="predict()">Predict</button>
-  <p id="output"></p>
+  <div class="container">
+    <h1>🏏 Cricket AI Run Predictor</h1>
+    <p class="subtitle">Enter match details to get predicted runs for the next ball</p>
+
+    <div class="form">
+      <label for="batter">Batter</label>
+      <input id="batter" placeholder="e.g. Rohit Sharma">
+
+      <label for="bowler">Bowler</label>
+      <input id="bowler" placeholder="e.g. Rashid Khan">
+
+      <label for="venue">Venue</label>
+      <select id="venue">
+        <option>Wankhede Stadium</option>
+        <option>Eden Gardens</option>
+        <option>Arun Jaitley Stadium</option>
+        <option>M. Chinnaswamy Stadium</option>
+        <option>Other</option>
+      </select>
+
+      <label for="batting_team">Batting Team</label>
+      <select id="batting_team">
+        <option>MI</option>
+        <option>CSK</option>
+        <option>RCB</option>
+        <option>KKR</option>
+        <option>DC</option>
+        <option>Other</option>
+      </select>
+
+      <label for="bowling_team">Bowling Team</label>
+      <select id="bowling_team">
+        <option>CSK</option>
+        <option>MI</option>
+        <option>RR</option>
+        <option>SRH</option>
+        <option>GT</option>
+        <option>Other</option>
+      </select>
+
+      <label for="over">Over</label>
+      <input type="number" id="over" min="0" max="20" placeholder="e.g. 5">
+
+      <label for="ball">Ball</label>
+      <input type="number" id="ball" min="0" max="6" placeholder="e.g. 3">
+
+      <button onclick="predict()">Predict Runs</button>
+    </div>
+
+    <p id="output"></p>
+  </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
