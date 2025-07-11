@@ -39,11 +39,15 @@ def get_wicket_model():
         wicket_model = download_model(WICKET_MODEL_URL, "wicket_model.pkl")
     return wicket_model
 
-from flask import Flask, render_template
-
+# ✅ Serve your frontend as-is
 @app.route("/", methods=["GET"])
-def home():
-    return render_template("index.html")
+def serve_frontend():
+    return send_from_directory("frontend", "index.html")
+
+# ✅ Serve static files (CSS, JS if needed)
+@app.route("/frontend/<path:path>")
+def serve_static(path):
+    return send_from_directory("frontend", path)
 
 @app.route('/predict', methods=['POST'])
 def predict_runs():
