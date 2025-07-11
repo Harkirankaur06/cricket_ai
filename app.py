@@ -39,6 +39,10 @@ def get_wicket_model():
         wicket_model = download_model(WICKET_MODEL_URL, "wicket_model.pkl")
     return wicket_model
 
+@app.route("/", methods=["GET"])
+def home():
+    return "Cricket Prediction API is running ✅"
+
 @app.route('/predict', methods=['POST'])
 def predict_runs():
     try:
