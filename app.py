@@ -19,8 +19,8 @@ def download_model(url, save_path):
     return joblib.load(save_path)
 
 # ✅ REPLACE these URLs with your actual Hugging Face model URLs
-RUNS_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/blob/main/predict_runs_model.pkl"
-WICKET_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/blob/main/predict_wicket_model.pkl"
+RUNS_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/resolve/main/predict_runs_model.pkl"
+WICKET_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/resolve/main/predict_wicket_model.pkl"
 
 # ✅ Download and load models
 runs_model = download_model(RUNS_MODEL_URL, "runs_model.pkl")
