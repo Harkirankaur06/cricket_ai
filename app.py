@@ -2,43 +2,29 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import pandas as pd
-import requests
-from io import BytesIO
 import os
+import requests
 
 app = Flask(__name__)
 CORS(app)
 
-# Google Drive loader for large .pkl files
-def load_model_from_drive(file_id, save_as):
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-        return None
+# 🔽 Function to download model from Hugging Face if not already present
+def download_model(url, save_path):
+    if not os.path.exists(save_path):
+        print(f"Downloading model from: {url}")
+        response = requests.get(url)
+        response.raise_for_status()  # fail loudly if broken link
+        with open(save_path, "wb") as f:
+            f.write(response.content)
+    return joblib.load(save_path)
 
-    def download_file(file_id):
-        URL = "https://docs.google.com/uc?export=download"
-        session = requests.Session()
-        response = session.get(URL, params={'id': file_id}, stream=True)
-        token = get_confirm_token(response)
+# ✅ REPLACE these URLs with your actual Hugging Face model URLs
+RUNS_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/blob/main/predict_runs_model.pkl"
+WICKET_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/blob/main/predict_wicket_model.pkl"
 
-        if token:
-            response = session.get(URL, params={'id': file_id, 'confirm': token}, stream=True)
-
-        with open(save_as, "wb") as f:
-            for chunk in response.iter_content(32768):
-                if chunk:
-                    f.write(chunk)
-
-        return save_as
-
-    file_path = download_file(file_id)
-    return joblib.load(file_path)
-
-# ✅ Load both models
-runs_model = load_model_from_drive("1HRe4PxVfXVw0-J6MNCQ38laWxQY-flPq", "runs_model.pkl")
-wicket_model = load_model_from_drive("1p7OwxgqctUneztgXsoqG34wl8eVPEkq1", "wicket_model.pkl")
+# ✅ Download and load models
+runs_model = download_model(RUNS_MODEL_URL, "runs_model.pkl")
+wicket_model = download_model(WICKET_MODEL_URL, "wicket_model.pkl")
 
 # ✅ Route: Predict Runs
 @app.route('/predict', methods=['POST'])
@@ -62,7 +48,7 @@ def predict_wicket():
         for col in input_df.columns:
             input_df[col] = input_df[col].astype('category').cat.codes
         prediction = wicket_model.predict(input_df)[0]
-        is_wicket = bool(prediction >= 0.5)  # binary classification style
+        is_wicket = bool(prediction >= 0.5)
         return jsonify({'wicket': is_wicket})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
