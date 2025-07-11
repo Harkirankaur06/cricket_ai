@@ -39,9 +39,11 @@ def get_wicket_model():
         wicket_model = download_model(WICKET_MODEL_URL, "wicket_model.pkl")
     return wicket_model
 
+from flask import Flask, render_template
+
 @app.route("/", methods=["GET"])
 def home():
-    return "Cricket Prediction API is running ✅"
+    return render_template("index.html")
 
 @app.route('/predict', methods=['POST'])
 def predict_runs():
