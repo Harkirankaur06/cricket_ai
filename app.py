@@ -22,32 +22,46 @@ def download_model(url, save_path):
 RUNS_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/resolve/main/predict_runs_model.pkl"
 WICKET_MODEL_URL = "https://huggingface.co/harkirankaur/CRICKET-PREDICT/resolve/main/predict_wicket_model.pkl"
 
-# ✅ Download and load models
-runs_model = download_model(RUNS_MODEL_URL, "runs_model.pkl")
-wicket_model = download_model(WICKET_MODEL_URL, "wicket_model.pkl")
+runs_model = None
+wicket_model = None
 
-# ✅ Route: Predict Runs
+def get_runs_model():
+    global runs_model
+    if runs_model is None:
+        print("Loading runs model...")
+        runs_model = download_model(RUNS_MODEL_URL, "runs_model.pkl")
+    return runs_model
+
+def get_wicket_model():
+    global wicket_model
+    if wicket_model is None:
+        print("Loading wicket model...")
+        wicket_model = download_model(WICKET_MODEL_URL, "wicket_model.pkl")
+    return wicket_model
+
 @app.route('/predict', methods=['POST'])
 def predict_runs():
     try:
+        model = get_runs_model()
         data = request.json
         input_df = pd.DataFrame([data])
         for col in input_df.columns:
             input_df[col] = input_df[col].astype('category').cat.codes
-        prediction = runs_model.predict(input_df)[0]
+        prediction = model.predict(input_df)[0]
         return jsonify({'predicted_runs': round(float(prediction), 2)})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ✅ Route: Predict Wicket
+
 @app.route('/predict_wicket', methods=['POST'])
 def predict_wicket():
     try:
+        model = get_wicket_model()
         data = request.json
         input_df = pd.DataFrame([data])
         for col in input_df.columns:
             input_df[col] = input_df[col].astype('category').cat.codes
-        prediction = wicket_model.predict(input_df)[0]
+        prediction = model.predict(input_df)[0]
         is_wicket = bool(prediction >= 0.5)
         return jsonify({'wicket': is_wicket})
     except Exception as e:
