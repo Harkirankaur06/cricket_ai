@@ -1,53 +1,52 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import joblib
 import pandas as pd
 import os
-import requests
+from huggingface_hub import hf_hub_download
 
 app = Flask(__name__)
+CORS(app)  # Allow frontend/backend interaction
 
-# ✅ Serve your frontend as-is
+# ✅ Serve the frontend (index.html)
 @app.route("/", methods=["GET"])
 def serve_frontend():
     return send_from_directory("frontend", "index.html")
 
-# ✅ Serve static files (CSS, JS if needed)
+# ✅ Serve static files (CSS, JS, etc.)
 @app.route("/frontend/<path:path>")
 def serve_static(path):
     return send_from_directory("frontend", path)
 
-# ✅ Use lazy loading for models
+# ✅ Lazy loading models from Hugging Face
 runs_model = None
 wicket_model = None
-
-def download_model(url, save_path):
-    if not os.path.exists(save_path):
-        r = requests.get(url)
-        with open(save_path, "wb") as f:
-            f.write(r.content)
-    return joblib.load(save_path)
 
 def get_runs_model():
     global runs_model
     if runs_model is None:
-        print("Loading runs model...")
-        runs_model = download_model(
-            "https://huggingface.co/harkirankaur/CRICKET-PREDICT/resolve/main/predict_runs_model.pkl",
-            "runs_model.pkl"
+        print("Downloading and loading runs model...")
+        file_path = hf_hub_download(
+            repo_id="harkirankaur/CRICKET-PREDICT",
+            filename="predict_runs_model.pkl",
+            repo_type="model"
         )
+        runs_model = joblib.load(file_path)
     return runs_model
 
 def get_wicket_model():
     global wicket_model
     if wicket_model is None:
-        print("Loading wicket model...")
-        wicket_model = download_model(
-            "https://huggingface.co/harkirankaur/CRICKET-PREDICT/resolve/main/predict_wicket_model.pkl",
-            "wicket_model.pkl"
+        print("Downloading and loading wicket model...")
+        file_path = hf_hub_download(
+            repo_id="harkirankaur/CRICKET-PREDICT",
+            filename="predict_wicket_model.pkl",
+            repo_type="model"
         )
+        wicket_model = joblib.load(file_path)
     return wicket_model
 
-# ✅ API endpoints
+# ✅ Prediction APIs
 @app.route("/predict", methods=["POST"])
 def predict_runs():
     try:
@@ -59,6 +58,7 @@ def predict_runs():
         prediction = model.predict(input_df)[0]
         return jsonify({"predicted_runs": round(float(prediction), 2)})
     except Exception as e:
+        print("Error in /predict:", e)
         return jsonify({"error": str(e)}), 500
 
 @app.route("/predict_wicket", methods=["POST"])
@@ -73,9 +73,10 @@ def predict_wicket():
         is_wicket = bool(prediction >= 0.5)
         return jsonify({"wicket": is_wicket})
     except Exception as e:
+        print("Error in /predict_wicket:", e)
         return jsonify({"error": str(e)}), 500
 
-# ✅ Start the server
+# ✅ Run the server
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
