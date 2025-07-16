@@ -1,14 +1,32 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import joblib
 import pandas as pd
-import os
+import joblib
 from huggingface_hub import hf_hub_download
+import gc
+import os
 
 app = Flask(__name__)
-CORS(app)  # Allow frontend/backend interaction
+CORS(app)
 
-# ✅ Serve the frontend (index.html)
+# ✅ Load models ONCE with Hugging Face hub and cache
+print("🔁 Downloading and loading runs model...")
+runs_model = joblib.load(hf_hub_download(
+    repo_id="harkirankaur/CRICKET-PREDICT",
+    filename="predict_runs_model.pkl",
+    repo_type="model"
+))
+gc.collect()
+
+print("🔁 Downloading and loading wicket model...")
+wicket_model = joblib.load(hf_hub_download(
+    repo_id="harkirankaur/CRICKET-PREDICT",
+    filename="predict_wicket_model.pkl",
+    repo_type="model"
+))
+gc.collect()
+
+# ✅ Serve frontend (index.html)
 @app.route("/", methods=["GET"])
 def serve_frontend():
     return send_from_directory("frontend", "index.html")
@@ -18,62 +36,30 @@ def serve_frontend():
 def serve_static(path):
     return send_from_directory("frontend", path)
 
-# ✅ Lazy loading models from Hugging Face
-runs_model = None
-wicket_model = None
-
-def get_runs_model():
-    global runs_model
-    if runs_model is None:
-        print("Downloading and loading runs model...")
-        file_path = hf_hub_download(
-            repo_id="harkirankaur/CRICKET-PREDICT",
-            filename="predict_runs_model.pkl",
-            repo_type="model"
-        )
-        runs_model = joblib.load(file_path)
-    return runs_model
-
-def get_wicket_model():
-    global wicket_model
-    if wicket_model is None:
-        print("Downloading and loading wicket model...")
-        file_path = hf_hub_download(
-            repo_id="harkirankaur/CRICKET-PREDICT",
-            filename="predict_wicket_model.pkl",
-            repo_type="model"
-        )
-        wicket_model = joblib.load(file_path)
-    return wicket_model
-
-# ✅ Prediction APIs
+# ✅ Predict Runs API
 @app.route("/predict", methods=["POST"])
 def predict_runs():
     try:
-        model = get_runs_model()
         data = request.json
         input_df = pd.DataFrame([data])
         for col in input_df.columns:
             input_df[col] = input_df[col].astype("category").cat.codes
-        prediction = model.predict(input_df)[0]
+        prediction = runs_model.predict(input_df)[0]
         return jsonify({"predicted_runs": round(float(prediction), 2)})
     except Exception as e:
-        print("Error in /predict:", e)
         return jsonify({"error": str(e)}), 500
 
+# ✅ Predict Wicket API
 @app.route("/predict_wicket", methods=["POST"])
 def predict_wicket():
     try:
-        model = get_wicket_model()
         data = request.json
         input_df = pd.DataFrame([data])
         for col in input_df.columns:
             input_df[col] = input_df[col].astype("category").cat.codes
-        prediction = model.predict(input_df)[0]
-        is_wicket = bool(prediction >= 0.5)
-        return jsonify({"wicket": is_wicket})
+        prediction = wicket_model.predict(input_df)[0]
+        return jsonify({"wicket": bool(prediction >= 0.5)})
     except Exception as e:
-        print("Error in /predict_wicket:", e)
         return jsonify({"error": str(e)}), 500
 
 # ✅ Run the server
