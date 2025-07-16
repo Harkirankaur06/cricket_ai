@@ -1,9 +1,2 @@
-flask
-flask-cors
-joblib
-pandas
-requests
-gunicorn
-pandas
-huggingface_hub
+
 scikit-learn==1.2.2
