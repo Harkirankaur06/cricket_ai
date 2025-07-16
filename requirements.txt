@@ -4,3 +4,5 @@ joblib
 pandas
 requests
 gunicorn
+pandas
+huggingface_hub
