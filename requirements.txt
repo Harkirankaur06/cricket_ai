@@ -6,3 +6,4 @@ requests
 gunicorn
 pandas
 huggingface_hub
+scikit-learn
